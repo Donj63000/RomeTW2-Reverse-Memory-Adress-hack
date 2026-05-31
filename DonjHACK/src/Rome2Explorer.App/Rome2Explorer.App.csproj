@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rome2Explorer.Domain\Rome2Explorer.Domain.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Features\Rome2Explorer.Features.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Memory\Rome2Explorer.Memory.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Trace\Rome2Explorer.Trace.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Validation\Rome2Explorer.Validation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\83e779c9-d418-4402-bd4a-050c0832b7a8.png">
+      <Link>Assets\donjhack-banner.png</Link>
+    </Resource>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+</Project>

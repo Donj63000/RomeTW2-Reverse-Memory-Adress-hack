@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rome2Explorer.Domain\Rome2Explorer.Domain.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Memory\Rome2Explorer.Memory.csproj" />
+    <ProjectReference Include="..\Rome2Explorer.Validation\Rome2Explorer.Validation.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,638 @@
+<Window x:Class="Rome2Explorer.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="DonjHACK - Rome2 Memory Explorer"
+        Height="900"
+        Width="1500"
+        MinHeight="760"
+        MinWidth="1180"
+        Background="#F6F7F9">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="278" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                <WrapPanel>
+                    <Button x:Name="RefreshProcessesButton"
+                            Width="132"
+                            Height="34"
+                            Margin="0,0,8,8"
+                            Content="Refresh Rome2"
+                            ToolTip="Je recharge la liste des processus Rome2.exe visibles avant de choisir le bon PID."
+                            Click="RefreshProcessesButton_Click" />
+                    <ComboBox x:Name="Rome2ProcessComboBox"
+                              Width="430"
+                              Height="34"
+                              Margin="0,0,8,8"
+                              DisplayMemberPath="DisplayName"
+                              ToolTip="Je choisis ici le Rome2.exe a attacher. Le processus recommande est selectionne par defaut." />
+                    <Button x:Name="AttachButton"
+                            Width="132"
+                            Height="34"
+                            Margin="0,0,8,8"
+                            Content="Attach Selected"
+                            ToolTip="J'attache DonjHACK au PID Rome2 selectionne. Les scans liront uniquement ce processus."
+                            IsEnabled="False"
+                            Click="AttachButton_Click" />
+                    <Button x:Name="ExportButton"
+                            Width="162"
+                            Height="34"
+                            Margin="0,0,8,8"
+                            Content="Export Memory Map"
+                            IsEnabled="False"
+                            Click="ExportButton_Click" />
+                </WrapPanel>
+
+                <Border x:Name="StatusBorder"
+                        Margin="0,12,12,12"
+                        Padding="10"
+                        Background="#E8EBEF"
+                        BorderBrush="#C9CED6"
+                        BorderThickness="1">
+                    <TextBlock x:Name="StatusText"
+                               FontFamily="Consolas"
+                               Text="NotAttached" />
+                </Border>
+
+                <Border Margin="0,0,12,0"
+                        Padding="12"
+                        Background="White"
+                        BorderBrush="#D5DAE1"
+                        BorderThickness="1">
+                    <TextBlock x:Name="ProcessInfoText"
+                               FontFamily="Consolas"
+                               TextWrapping="Wrap"
+                               Text="Process: aucun processus attache." />
+                </Border>
+            </StackPanel>
+
+            <Border Grid.Column="1"
+                    Width="278"
+                    Height="156"
+                    BorderBrush="#6F542C"
+                    BorderThickness="1"
+                    Background="#090807"
+                    ClipToBounds="True">
+                <Image Source="pack://application:,,,/Assets/donjhack-banner.png"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+            </Border>
+        </Grid>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Modules">
+                <DataGrid x:Name="ModulesGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="220" />
+                        <DataGridTextColumn Header="Base" Binding="{Binding BaseAddress}" Width="150" />
+                        <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="110" />
+                        <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Regions">
+                <DataGrid x:Name="RegionsGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Base" Binding="{Binding BaseAddress}" Width="150" />
+                        <DataGridTextColumn Header="Size" Binding="{Binding Size}" Width="120" />
+                        <DataGridTextColumn Header="State" Binding="{Binding State}" Width="120" />
+                        <DataGridTextColumn Header="Protection" Binding="{Binding Protection}" Width="210" />
+                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="120" />
+                        <DataGridCheckBoxColumn Header="Read" Binding="{Binding IsReadable}" Width="70" />
+                        <DataGridCheckBoxColumn Header="Write" Binding="{Binding IsWritable}" Width="70" />
+                        <DataGridCheckBoxColumn Header="Exec" Binding="{Binding IsExecutable}" Width="70" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="Treasury Scanner">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <WrapPanel Grid.Row="0" VerticalAlignment="Center">
+                        <TextBlock VerticalAlignment="Center"
+                                   Margin="0,0,8,8"
+                                   Text="Argent actuel" />
+                        <TextBox x:Name="TreasuryValueTextBox"
+                                 Width="120"
+                                 Height="30"
+                                 Margin="0,0,8,8"
+                                 VerticalContentAlignment="Center"
+                                 ToolTip="Je saisis ici l'argent exact affiche dans la campagne, puis je lance Start Scan ou Refine Scan selon l'etape." />
+                        <Button x:Name="StartTreasuryScanButton"
+                                Width="108"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Start Scan"
+                                ToolTip="Je mets l'argent exact affiche en campagne, puis je lance le premier scan."
+                                IsEnabled="False"
+                                Click="StartTreasuryScanButton_Click" />
+                        <Button x:Name="RefineTreasuryScanButton"
+                                Width="108"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Refine Scan"
+                                ToolTip="Je change l'argent en jeu, je saisis la nouvelle valeur affichee, puis je filtre les candidats existants."
+                                IsEnabled="False"
+                                Click="RefineTreasuryScanButton_Click" />
+                        <Button x:Name="DiscriminateTreasuryCandidatesButton"
+                                Width="168"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                FontWeight="SemiBold"
+                                Background="#DCEEFF"
+                                Content="Departager candidats"
+                                ToolTip="Quand plusieurs adresses suivent encore l'argent, je les observe en lecture seule et je journalise ce qui change."
+                                IsEnabled="False"
+                                Click="DiscriminateTreasuryCandidatesButton_Click" />
+                        <Button x:Name="MoneyChangeDoneButton"
+                                Width="104"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                FontWeight="SemiBold"
+                                Background="#CFEFD5"
+                                Content="C'est fait"
+                                ToolTip="Je clique ici apres avoir change l'argent dans Rome2. L'observation commence seulement apres ce clic."
+                                Visibility="Collapsed"
+                                IsEnabled="False"
+                                Click="MoneyChangeDoneButton_Click" />
+                        <Button x:Name="ExportTreasuryCandidatesButton"
+                                Width="132"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Export Candidates"
+                                ToolTip="J'exporte les resultats apres au moins un refine utile."
+                                IsEnabled="False"
+                                Click="ExportTreasuryCandidatesButton_Click" />
+                        <Button x:Name="ImportCeCaptureButton"
+                                Width="128"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Import CE Capture"
+                                ToolTip="J'importe des captures Cheat Engine/Lua read-only pour comparer les fenetres memoire autour des candidats."
+                                IsEnabled="False"
+                                Click="ImportCeCaptureButton_Click" />
+                        <Button x:Name="AnalyzeTreasuryPointersButton"
+                                Width="166"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Analyser pointeurs"
+                                ToolTip="J'analyse en lecture seule les pointeurs x86 entrants et les bases structure possibles du candidat selectionne."
+                                IsEnabled="False"
+                                Click="AnalyzeTreasuryPointersButton_Click" />
+                        <Button x:Name="ExportTreasuryPointersButton"
+                                Width="126"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Exporter structure"
+                                ToolTip="J'exporte la derniere analyse structure/pointeurs sous evidence/structures."
+                                IsEnabled="False"
+                                Click="ExportTreasuryPointersButton_Click" />
+                        <Button x:Name="ExportTreasuryValidationButton"
+                                Width="140"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Export validation A"
+                                ToolTip="J'exporte la session courante comme preuve de depart avant reload ou redemarrage."
+                                IsEnabled="False"
+                                Click="ExportTreasuryValidationButton_Click" />
+                        <Button x:Name="CompareTreasuryValidationButton"
+                                Width="124"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Comparer reload"
+                                ToolTip="Apres reload/redemarrage et nouveau scan, je compare le candidat courant aux preuves precedentes."
+                                IsEnabled="False"
+                                Click="CompareTreasuryValidationButton_Click" />
+                        <Button x:Name="CancelTreasuryScanButton"
+                                Width="80"
+                                Height="30"
+                                Margin="0,0,8,8"
+                                Content="Cancel"
+                                IsEnabled="False"
+                                Click="CancelTreasuryScanButton_Click" />
+                    </WrapPanel>
+
+                    <Grid Grid.Row="1" Margin="0,2,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="620" />
+                            <ColumnDefinition Width="460" MinWidth="420" MaxWidth="560" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Margin="0,0,10,0"
+                                Padding="10"
+                                Background="#FFF7E6"
+                                BorderBrush="#D9B36F"
+                                BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="132" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,6"
+                                           Text="Procedure guidee" />
+                                <TextBlock Grid.Row="1" Grid.Column="0"
+                                           Margin="0,0,10,3"
+                                           FontWeight="SemiBold"
+                                           Text="Etape" />
+                                <TextBlock x:Name="TreasuryGuidanceStepText"
+                                           Grid.Row="1" Grid.Column="1"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="2" Grid.Column="0"
+                                           Margin="0,0,10,3"
+                                           FontWeight="SemiBold"
+                                           Text="Action" />
+                                <TextBlock x:Name="TreasuryGuidanceActionText"
+                                           Grid.Row="2" Grid.Column="1"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="3" Grid.Column="0"
+                                           Margin="0,0,10,0"
+                                           FontWeight="SemiBold"
+                                           Text="Resultat" />
+                                <TextBlock x:Name="TreasuryGuidanceExpectedText"
+                                           Grid.Row="3" Grid.Column="1"
+                                           TextWrapping="Wrap" />
+                                <TextBlock x:Name="TreasuryGuidanceWhyText"
+                                           Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Padding="10"
+                                Background="White"
+                                BorderBrush="#D5DAE1"
+                                BorderThickness="1">
+                            <TextBlock x:Name="TreasurySummaryText"
+                                       FontFamily="Consolas"
+                                       TextWrapping="Wrap"
+                                       Text="Aucun scan treasury lance." />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="650" />
+                            <ColumnDefinition Width="470" MinWidth="430" MaxWidth="580" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" Margin="0,0,10,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Expander Grid.Row="0"
+                                      Margin="0,0,0,8"
+                                      IsExpanded="False"
+                                      Header="Informations utilisees (selection)">
+                                <Border Padding="10"
+                                        Background="#F3F7FB"
+                                        BorderBrush="#B8C7D9"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="150" />
+                                        </Grid.ColumnDefinitions>
+                                        <ScrollViewer Grid.Column="0"
+                                                      MaxHeight="170"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <TextBlock x:Name="TreasuryCandidateDetailsText"
+                                                       FontFamily="Consolas"
+                                                       TextWrapping="Wrap"
+                                                       Text="Selectionne un candidat pour voir adresse, offset, architecture, hook, region et preuves." />
+                                        </ScrollViewer>
+                                        <Button x:Name="SaveTreasuryFindingButton"
+                                                Grid.Column="1"
+                                                Width="136"
+                                                Height="32"
+                                                Margin="12,0,0,0"
+                                                VerticalAlignment="Top"
+                                                Content="Keep Candidate"
+                                                ToolTip="Je garde ce candidat dans evidence/known-findings pour le retrouver plus vite ensuite."
+                                                IsEnabled="False"
+                                                Click="SaveTreasuryFindingButton_Click" />
+                                    </Grid>
+                                </Border>
+                            </Expander>
+
+                            <DataGrid x:Name="TreasuryCandidatesGrid"
+                                      Grid.Row="1"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True"
+                                      GridLinesVisibility="Horizontal"
+                                      SelectionChanged="TreasuryCandidatesGrid_SelectionChanged">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAlgorithmAmbiguousTop}" Value="True">
+                                                <Setter Property="Background" Value="#FFF6CC" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDiscriminatorObserved}" Value="True">
+                                                <Setter Property="Background" Value="#DCEEFF" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsAlgorithmFavorite}" Value="True">
+                                                <Setter Property="Background" Value="#DFF5E1" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDiscriminatorFavorite}" Value="True">
+                                                <Setter Property="Background" Value="#CFEFD5" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDiscriminatorFailed}" Value="True">
+                                                <Setter Property="Background" Value="#FFE3E3" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsPointerAmbiguous}" Value="True">
+                                                <Setter Property="Background" Value="#FFF6CC" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsPointerProbable}" Value="True">
+                                                <Setter Property="Background" Value="#CFEFD5" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsValidationAmbiguous}" Value="True">
+                                                <Setter Property="Background" Value="#FFF6CC" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsValidationProbable}" Value="True">
+                                                <Setter Property="Background" Value="#D9F2E6" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsValidationValidated}" Value="True">
+                                                <Setter Property="Background" Value="#BFECC8" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsValidationBroken}" Value="True">
+                                                <Setter Property="Background" Value="#FFE3E3" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsStructureAmbiguous}" Value="True">
+                                                <Setter Property="Background" Value="#FFF6CC" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsStructureProbable}" Value="True">
+                                                <Setter Property="Background" Value="#D9F2E6" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Statut" Binding="{Binding Status}" Width="112" />
+                                    <DataGridTextColumn Header="Algo" Binding="{Binding AlgorithmScore}" Width="82" />
+                                    <DataGridTextColumn Header="Departage" Binding="{Binding DiscriminatorVerdict}" Width="150" />
+                                    <DataGridTextColumn Header="DScore" Binding="{Binding DiscriminatorScore}" Width="70" />
+                                    <DataGridTextColumn Header="Pointer" Binding="{Binding PointerStatus}" Width="165" />
+                                    <DataGridTextColumn Header="PScore" Binding="{Binding PointerScore}" Width="70" />
+                                    <DataGridTextColumn Header="Validation" Binding="{Binding ValidationStatus}" Width="150" />
+                                    <DataGridTextColumn Header="VScore" Binding="{Binding ValidationScore}" Width="70" />
+                                    <DataGridTextColumn Header="Structure" Binding="{Binding StructureStatus}" Width="120" />
+                                    <DataGridTextColumn Header="SScore" Binding="{Binding StructureScore}" Width="70" />
+                                    <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="140" />
+                                    <DataGridTextColumn Header="Observed" Binding="{Binding ObservedValue}" Width="90" />
+                                    <DataGridTextColumn Header="Expected" Binding="{Binding ExpectedValue}" Width="90" />
+                                    <DataGridTextColumn Binding="{Binding Confidence}" Width="90">
+                                        <DataGridTextColumn.Header>
+                                            <TextBlock Text="Confidence"
+                                                       ToolTip="0.15 = candidat brut : l'adresse contient la valeur, mais elle n'est pas fiable avant un refine." />
+                                        </DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Offset" Binding="{Binding OffsetStatus}" Width="170" />
+                                    <DataGridTextColumn Header="Region" Binding="{Binding RegionBase}" Width="130" />
+                                    <DataGridTextColumn Header="Protection" Binding="{Binding Protection}" Width="160" />
+                                    <DataGridTextColumn Header="Evidence" Binding="{Binding Evidence}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <Border Grid.Column="1"
+                                Padding="12"
+                                Background="#F8FBFF"
+                                BorderBrush="#7EA6CE"
+                                BorderThickness="1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0"
+                                        Margin="0,0,0,10"
+                                        Padding="10"
+                                        Background="#FFF7E6"
+                                        BorderBrush="#D9B36F"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                   Text="Modification argent"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,6" />
+
+                                        <WrapPanel Grid.Row="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Nouvelle valeur"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,8,6" />
+                                            <TextBox x:Name="NewTreasuryValueTextBox"
+                                                     Width="104"
+                                                     Height="28"
+                                                     Margin="0,0,8,6"
+                                                     Text="150000"
+                                                     VerticalContentAlignment="Center"
+                                                     ToolTip="Je saisis ici la valeur a ecrire sur le candidat selectionne, par exemple 150000." />
+                                            <Button x:Name="WriteTreasuryMoneyButton"
+                                                    Width="190"
+                                                    Height="28"
+                                                    Margin="0,0,0,6"
+                                                    Content="Modifier l'argent selectionne"
+                                                    ToolTip="J'ecris uniquement sur la ligne selectionnee apres verification de la valeur actuelle."
+                                                    IsEnabled="False"
+                                                    Click="WriteTreasuryMoneyButton_Click" />
+                                        </WrapPanel>
+
+                                        <CheckBox x:Name="ConfirmTreasuryWriteCheckBox"
+                                                  Grid.Row="2"
+                                                  Margin="0,0,0,6"
+                                                  Content="Je confirme utiliser le candidat selectionne"
+                                                  ToolTip="Cette confirmation evite d'ecrire par erreur sur une adresse ambigue."
+                                                  Checked="ConfirmTreasuryWriteCheckBox_CheckedChanged"
+                                                  Unchecked="ConfirmTreasuryWriteCheckBox_CheckedChanged" />
+
+                                        <TextBlock x:Name="TreasuryWriteStatusText"
+                                                   Grid.Row="3"
+                                                   FontFamily="Consolas"
+                                                   TextWrapping="Wrap"
+                                                   Text="Pret : selectionne un candidat, confirme, puis ecris une nouvelle valeur." />
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Row="1"
+                                        Margin="0,0,0,10"
+                                        Padding="10"
+                                        Background="#EFF8F3"
+                                        BorderBrush="#8AB99F"
+                                        BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Structure / Pointeurs"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,4" />
+                                        <TextBlock x:Name="TreasuryPointerSummaryText"
+                                                   FontFamily="Consolas"
+                                                   TextWrapping="Wrap"
+                                                   Text="Selectionne un candidat treasury puis clique Analyser structure/pointeurs." />
+                                        <TextBlock x:Name="TreasuryPointerExportPathText"
+                                                   FontFamily="Consolas"
+                                                   Foreground="#3D5F8C"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,6,0,0"
+                                                   Text="" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Row="2"
+                                        Margin="0,0,0,10"
+                                        Padding="10"
+                                        Background="#F4F1FF"
+                                        BorderBrush="#9D8FD3"
+                                        BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Validation reload/redemarrage"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,4" />
+                                        <TextBlock x:Name="TreasuryValidationSummaryText"
+                                                   FontFamily="Consolas"
+                                                   TextWrapping="Wrap"
+                                                   Text="Workflow: fais marcher le write, exporte la session A, reload/redemarre, rescan, puis compare." />
+                                        <TextBlock x:Name="TreasuryValidationExportPathText"
+                                                   FontFamily="Consolas"
+                                                   Foreground="#3D5F8C"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,6,0,0"
+                                                   Text="" />
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Grid.Row="3"
+                                           Text="Analyse de departage"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,8" />
+                                 <StackPanel Grid.Row="4" Margin="0,0,0,8">
+                                     <TextBlock x:Name="DiscriminatorSummaryText"
+                                                FontFamily="Consolas"
+                                                FontSize="14"
+                                                FontWeight="SemiBold"
+                                               TextWrapping="Wrap"
+                                               Text="Clique Departager candidats quand 2 a 10 candidats restent apres refine." />
+                                    <TextBlock x:Name="DiscriminatorExportPathText"
+                                               FontFamily="Consolas"
+                                               Foreground="#3D5F8C"
+                                               TextWrapping="Wrap"
+                                                Margin="0,6,0,0"
+                                                Text="" />
+                                 </StackPanel>
+                                <StackPanel Grid.Row="5" Margin="0,0,0,8">
+                                    <TextBlock Text="Comparaison structure CE/Lua"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,4" />
+                                    <TextBlock x:Name="StructureComparisonSummaryText"
+                                               FontFamily="Consolas"
+                                               TextWrapping="Wrap"
+                                               Text="Importe une ou plusieurs captures CE/Lua pour comparer les fenetres memoire autour des candidats treasury." />
+                                    <TextBlock x:Name="StructureComparisonExportPathText"
+                                               FontFamily="Consolas"
+                                               Foreground="#3D5F8C"
+                                               TextWrapping="Wrap"
+                                               Margin="0,6,0,0"
+                                                 Text="" />
+                                </StackPanel>
+                                 <DataGrid x:Name="DiscriminatorLogGrid"
+                                          Grid.Row="6"
+                                          MinHeight="220"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          IsReadOnly="True"
+                                          GridLinesVisibility="Horizontal">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Heure" Binding="{Binding Time}" Width="86" />
+                                        <DataGridTextColumn Header="Event" Binding="{Binding EventType}" Width="86" />
+                                        <DataGridTextColumn Header="Adresse" Binding="{Binding Address}" Width="110" />
+                                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Known Findings">
+                <DataGrid x:Name="SavedFindingsGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          GridLinesVisibility="Horizontal">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Feature" Binding="{Binding FeatureId}" Width="210" />
+                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="190" />
+                        <DataGridTextColumn Header="Address" Binding="{Binding AddressHex}" Width="120" />
+                        <DataGridTextColumn Header="Module" Binding="{Binding ModuleName}" Width="130" />
+                        <DataGridTextColumn Header="Offset" Binding="{Binding OffsetStatus}" Width="210" />
+                        <DataGridTextColumn Header="Arch" Binding="{Binding Architecture}" Width="70" />
+                        <DataGridTextColumn Header="Hook" Binding="{Binding HookStatus}" Width="180" />
+                        <DataGridTextColumn Header="Pointer" Binding="{Binding PointerStatus}" Width="210" />
+                        <DataGridTextColumn Header="Values" Binding="{Binding ValueHistoryText}" Width="160" />
+                        <DataGridTextColumn Header="Saved" Binding="{Binding SavedAt}" Width="150" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

@@ -1,0 +1,80 @@
+# DonjHACK / Total War Rome 2 workspace
+#
+# La racine est le dossier du jeu. Par securite, j'ignore tout par defaut pour
+# eviter d'ajouter les DLL, EXE, dumps, dossiers data et fichiers lourds du jeu.
+
+*
+
+# Fichiers de cadrage publics a versionner.
+!/.gitignore
+!/procedure.txt
+
+# Ces documents restent locaux : ils contiennent le cadrage interne du projet.
+/AGENTS.md
+/Plan.MD
+
+# Projet DonjHACK autorise.
+!/DonjHACK/
+!/DonjHACK/**
+
+# Backups locaux generes avant modifications.
+/backup/
+/DonjHACK/backup/
+
+# Builds .NET / WPF.
+/DonjHACK/**/bin/
+/DonjHACK/**/obj/
+/DonjHACK/artifacts/
+/DonjHACK/**/artifacts/
+/DonjHACK/TestResults/
+/DonjHACK/**/TestResults/
+
+# Fichiers IDE et etat utilisateur.
+/.vs/
+/DonjHACK/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+
+# Packages/caches temporaires.
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# Evidence, logs et exports generes par les scans.
+# Je garde les dossiers dans le projet si un .gitkeep ou README y est ajoute,
+# mais les exports runtime restent locaux.
+/DonjHACK/evidence/**
+!/DonjHACK/evidence/
+!/DonjHACK/evidence/**/.gitkeep
+!/DonjHACK/evidence/**/README.md
+/DonjHACK/logs/**
+!/DonjHACK/logs/
+!/DonjHACK/logs/**/.gitkeep
+!/DonjHACK/logs/**/README.md
+
+# Donnees runtime volumineuses ou sensibles.
+*.log
+*.tmp
+*.temp
+*.cache
+*.dmp
+*.mdmp
+*.bak
+*.old
+
+# Captures et exports ponctuels hors documentation source.
+*.zip
+*.7z
+*.rar
+*.bin
+*.dump
+
+# Fichiers Windows.
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/

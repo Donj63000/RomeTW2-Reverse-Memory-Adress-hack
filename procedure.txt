@@ -1,0 +1,1044 @@
+Procedure Cheat Engine - Changer le projectile des Helot Javelinmen
+===================================================================
+
+Contexte
+--------
+
+Je travaille sur une build locale de Rome 2 dediee au reverse engineering.
+Le but ici est de modifier la session en cours, en memoire, sans patcher les
+fichiers du jeu et sans redemarrer.
+
+Unite analysee :
+
+    Helot Javelinmen
+
+Cle d'unite :
+
+    Gre_Helot_Javelinmen
+
+Arme de jet utilisee par cette unite :
+
+    rome_wooden_javelin
+
+Projectile original de cette arme :
+
+    javelin_wooden
+
+
+Etat trouve dans la session actuelle
+------------------------------------
+
+Processus :
+
+    Rome2.exe
+
+PID observe pendant l'analyse :
+
+    11080
+
+Attention : le PID et les adresses peuvent changer si le jeu est relance.
+Il faut donc savoir retrouver les adresses, pas seulement les copier.
+
+Dans cette session, la chaine logique trouvee est :
+
+    191B000C -> 1916C148 -> "rome_wooden_javelin"
+    191B001C -> 19166448
+    19166448 -> 191B7400
+    191B7410 -> 1914DF28 -> "javelin_wooden"
+
+Interpretation :
+
+    191B0000        = ligne/structure memoire de l'arme rome_wooden_javelin
+    191B0000 + 0x0C = pointeur vers le nom de l'arme
+    191B0000 + 0x1C = pointeur vers le champ qui contient le projectile
+    19166448        = champ projectile de l'arme rome_wooden_javelin
+    191B7400        = structure projectile javelin_wooden
+
+Adresse importante a modifier :
+
+    19166448
+
+Valeur originale :
+
+    191B7400 = javelin_wooden
+
+Valeur actuellement testee :
+
+    191B6A00 = bolt
+
+Effet confirme en bataille :
+
+    Missile Damage affiche = 120
+    Range affiche          = 350
+
+Ces valeurs correspondent au projectile bolt :
+
+    damage    = 50
+    AP damage = 70
+    total     = 120
+    range     = 350
+
+Important : les soldats gardent visuellement leurs javelots dans les mains.
+La modification change le projectile logique utilise par l'arme et les stats
+de tir, pas le modele 3D tenu par les soldats ni leur animation.
+
+Rollback :
+
+    remettre 19166448 a 191B7400
+
+
+Projectiles utiles trouves dans cette session
+---------------------------------------------
+
+    191B7400 = javelin_wooden
+    191B6A00 = bolt
+    191B8300 = rock
+    191B89E0 = stone
+    191B8580 = arrow_polybolos
+    191B72C0 = rock_large
+    191B75E0 = javelin_fire
+
+Ces adresses sont valides pour la session analysee. Apres redemarrage du jeu,
+il faut les verifier ou les retrouver.
+
+
+Ce que j'ai fait exactement
+---------------------------
+
+1. J'ai identifie le projectile original de l'unite.
+
+   Dans les donnees du jeu :
+
+       Gre_Helot_Javelinmen
+       -> primary_missile_weapon = rome_wooden_javelin
+       -> default_projectile     = javelin_wooden
+
+2. J'ai cherche en memoire la structure projectile javelin_wooden.
+
+   La structure trouvee est :
+
+       191B7400
+
+   Verification :
+
+       191B7400 + 0x10 = 191B7410
+       191B7410 -> 1914DF28
+       1914DF28 -> "javelin_wooden"
+
+3. J'ai cherche le mapping entre l'arme rome_wooden_javelin et le projectile.
+
+   La structure de l'arme commence a :
+
+       191B0000
+
+   Verification :
+
+       191B0000 + 0x0C = 191B000C
+       191B000C -> 1916C148
+       1916C148 -> "rome_wooden_javelin"
+
+4. Dans cette structure d'arme, le champ a +0x1C pointe vers le champ projectile :
+
+       191B0000 + 0x1C = 191B001C
+       191B001C -> 19166448
+
+5. J'ai lu le champ projectile :
+
+       19166448 -> 191B7400
+
+   Donc le champ 19166448 contient le projectile actuel de l'arme.
+
+6. J'ai remplace la valeur :
+
+       avant : 19166448 -> 191B7400 -> javelin_wooden
+       apres : 19166448 -> 191B6A00 -> bolt
+
+7. J'ai relu immediatement apres l'ecriture pour verifier :
+
+       19166448 -> 191B6A00 -> bolt
+
+8. J'ai verifie en bataille sur la fiche de l'unite.
+
+   Avant, le javelot normal avait :
+
+       range = 80
+       damage + AP = 29
+
+   Apres modification vers bolt, la fiche affichait :
+
+       Range          = 350
+       Missile Damage = 120
+
+   Ces valeurs confirment que le jeu lit bien le projectile bolt pour les
+   stats et la logique de l'arme.
+
+9. J'ai note une limite visuelle importante.
+
+   Les hommes gardent le javelot dans la main, parce que ce modele depend du
+   loadout/animation de l'unite. Ce n'est pas la meme chose que le projectile
+   logique lance par l'arme.
+
+
+Procedure Cheat Engine rapide pour cette session
+------------------------------------------------
+
+Utiliser cette procedure tant que le jeu n'a pas ete redemarre.
+
+1. Ouvrir Cheat Engine en administrateur.
+
+2. Attacher Cheat Engine au processus :
+
+       Rome2.exe
+
+3. Ajouter l'adresse manuellement :
+
+       Address : 19166448
+       Type    : 4 Bytes
+       Hex     : oui
+
+   Attention : il faut ajouter cette adresse dans la table du bas de Cheat
+   Engine. Ne pas confondre avec la liste des resultats du haut.
+
+   Si l'adresse est deja visible dans la liste des resultats du haut, on peut
+   aussi double-cliquer dessus pour l'ajouter en bas. Mais la modification doit
+   ensuite se faire sur la ligne ajoutee dans la table du bas.
+
+4. Lire la valeur affichee.
+
+   Si la valeur est :
+
+       191B7400
+
+   alors l'arme utilise encore le projectile original :
+
+       javelin_wooden
+
+   Si la valeur est :
+
+       191B6A00
+
+   alors l'arme utilise deja :
+
+       bolt
+
+5. Pour passer en bolt :
+
+       double-cliquer la valeur
+       entrer 191B6A00
+       valider
+
+   Apres validation, relire la ligne. Elle doit afficher :
+
+       191B6A00
+
+6. Pour revenir au javelot normal :
+
+       double-cliquer la valeur
+       entrer 191B7400
+       valider
+
+   Apres validation, relire la ligne. Elle doit afficher :
+
+       191B7400
+
+7. Ne pas cocher freeze sur cette adresse au debut.
+
+   On veut d'abord tester le comportement naturel du jeu. Si on freeze trop
+   tot, on peut masquer un probleme ou empecher le jeu de remettre une valeur
+   legitime pendant un chargement.
+
+8. Tester en bataille.
+
+   Selectionner les Helot Javelinmen et regarder la fiche unite.
+
+   Si la modification vers bolt est active, on doit voir :
+
+       Missile Damage = 120
+       Range          = 350
+
+   Si les soldats tiennent toujours des javelots, c'est normal. Ce n'est pas
+   l'indicateur principal. L'indicateur fiable est la fiche de stats, puis le
+   comportement du tir.
+
+9. Tester le tir.
+
+   Donner une cible a une distance superieure a l'ancien range du javelot.
+
+   Ancien range :
+
+       80
+
+   Nouveau range attendu avec bolt :
+
+       350
+
+   Si l'unite peut tirer beaucoup plus loin et que les degats correspondent,
+   la modification est active.
+
+
+Procedure Cheat Engine ultra detaillee
+--------------------------------------
+
+Cette section explique uniquement ce qu'il faut faire dans Cheat Engine.
+Elle est faite pour refaire la manipulation sans se tromper.
+
+Objectif :
+
+    changer le projectile de l'arme rome_wooden_javelin
+
+Adresse a modifier dans cette session :
+
+    19166448
+
+Valeur normale :
+
+    191B7400 = javelin_wooden
+
+Valeur testee :
+
+    191B6A00 = bolt
+
+
+Etape 1 - Ouvrir Cheat Engine correctement
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Lancer le jeu.
+
+2. Charger la partie ou la bataille.
+
+3. Ouvrir Cheat Engine en administrateur.
+
+4. En haut a gauche de Cheat Engine, cliquer sur l'icone ordinateur.
+
+5. Dans la liste des processus, choisir :
+
+       Rome2.exe
+
+6. Verifier qu'en haut de Cheat Engine on voit bien :
+
+       Rome2.exe
+
+   Si ce n'est pas Rome2.exe, ne rien modifier.
+
+
+Etape 2 - Comprendre l'ecran Cheat Engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dans Cheat Engine, il y a deux zones importantes.
+
+Zone du haut :
+
+    liste des resultats de scan
+
+Zone du bas :
+
+    table des adresses qu'on garde et qu'on modifie
+
+Regle importante :
+
+    Je modifie uniquement une adresse ajoutee dans la table du bas.
+    Je ne modifie pas directement une ligne au hasard dans les resultats du haut.
+
+Pourquoi :
+
+    la liste du haut contient beaucoup de resultats
+    beaucoup sont inutiles ou dangereux
+    la table du bas permet de garder une adresse precise et verifiee
+
+
+Etape 3 - Ajouter l'adresse proprement
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Regarder la table du bas.
+
+2. Faire clic droit dans une zone vide de la table du bas.
+
+3. Cliquer :
+
+       Add address manually
+
+4. Dans Address, entrer exactement :
+
+       19166448
+
+5. Dans Type, choisir :
+
+       4 Bytes
+
+6. Si une option Hex est disponible, l'activer.
+
+7. Cliquer OK.
+
+8. Une nouvelle ligne doit apparaitre en bas.
+
+Elle doit ressembler a ca :
+
+       Address     Type       Value
+       19166448    4 Bytes    191B7400
+
+ou, si la modification est deja active :
+
+       Address     Type       Value
+       19166448    4 Bytes    191B6A00
+
+
+Etape 4 - Verifier avant de modifier
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Avant de changer quoi que ce soit, lire la valeur affichee.
+
+Cas 1 :
+
+       19166448 = 191B7400
+
+Signification :
+
+       c'est normal
+       l'arme utilise encore javelin_wooden
+       on peut passer en bolt
+
+Cas 2 :
+
+       19166448 = 191B6A00
+
+Signification :
+
+       la modification est deja active
+       l'arme utilise deja bolt
+       il n'y a rien a refaire pour passer en bolt
+
+Cas 3 :
+
+       19166448 = une autre valeur
+
+Signification :
+
+       stop
+       ne pas modifier au hasard
+       l'adresse n'est peut-etre plus valide
+       il faut refaire la procedure de recherche
+
+Cas 4 :
+
+       19166448 = ??
+
+Signification probable :
+
+       mauvais processus
+       jeu ferme
+       partie relancee
+       adresse plus valide
+
+Action :
+
+       verifier que Cheat Engine est attache a Rome2.exe
+       si le jeu a ete redemarre, refaire la procedure de recherche
+
+
+Etape 5 - Passer les javelots en bolt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Dans la table du bas, trouver la ligne :
+
+       19166448
+
+2. Double-cliquer sur la colonne Value.
+
+3. Entrer exactement :
+
+       191B6A00
+
+4. Valider.
+
+5. Relire la ligne.
+
+Elle doit maintenant afficher :
+
+       19166448    4 Bytes    191B6A00
+
+6. Ne pas cocher la case Active/Freeze.
+
+Important :
+
+    la case Active/Freeze sert a bloquer une valeur
+    pour ce test, on ne la coche pas
+    on veut juste changer la valeur une fois
+
+
+Etape 6 - Verifier en jeu
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Retourner en jeu.
+
+2. Selectionner les Helot Javelinmen.
+
+3. Regarder la fiche de l'unite.
+
+Si la modification est active, on doit voir :
+
+       Missile Damage = 120
+       Range          = 350
+
+Ces chiffres correspondent a bolt :
+
+       damage    = 50
+       AP damage = 70
+       total     = 120
+       range     = 350
+
+Attention :
+
+    les soldats peuvent toujours tenir des javelots dans les mains
+    c'est normal
+    on n'a pas change le modele 3D de l'arme tenue
+    on a change le projectile logique de l'arme
+
+Donc le bon indicateur n'est pas le javelot visible dans la main.
+
+Les bons indicateurs sont :
+
+       Missile Damage
+       Range
+       portee de tir en bataille
+       degats infliges
+
+
+Etape 7 - Tester le tir
+~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Trouver une cible ennemie.
+
+2. Essayer de tirer a une distance plus grande qu'un javelot normal.
+
+Ancienne portee du javelot :
+
+       80
+
+Nouvelle portee attendue avec bolt :
+
+       350
+
+3. Si l'unite peut tirer beaucoup plus loin, la modification marche.
+
+4. Si les degats sont tres eleves, la modification marche.
+
+5. Si la fiche indique encore range 80, la modification n'est pas active.
+
+
+Etape 8 - Revenir aux javelots normaux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Retourner dans Cheat Engine.
+
+2. Dans la table du bas, trouver :
+
+       19166448
+
+3. Double-cliquer sur la colonne Value.
+
+4. Entrer exactement :
+
+       191B7400
+
+5. Valider.
+
+6. Relire la ligne.
+
+Elle doit afficher :
+
+       19166448    4 Bytes    191B7400
+
+7. Retourner en jeu.
+
+8. La fiche doit revenir vers les stats de javelot normal :
+
+       Range plus faible
+       Missile Damage beaucoup plus faible
+
+
+Etape 9 - Tester d'autres projectiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pour tester un autre projectile, on change seulement la valeur de 19166448.
+
+Valeurs connues dans cette session :
+
+       191B7400 = javelin_wooden
+       191B6A00 = bolt
+       191B8300 = rock
+       191B89E0 = stone
+       191B8580 = arrow_polybolos
+       191B72C0 = rock_large
+       191B75E0 = javelin_fire
+
+Exemple pour tester rock :
+
+       19166448 = 191B8300
+
+Exemple pour tester stone :
+
+       19166448 = 191B89E0
+
+Toujours garder le rollback en tete :
+
+       19166448 = 191B7400
+
+
+Etape 10 - Creer un dropdown dans Cheat Engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cette etape evite de retaper les valeurs a la main.
+
+1. Dans la table du bas, clic droit sur la ligne :
+
+       19166448
+
+2. Cliquer :
+
+       Set/Change dropdown selection options
+
+3. Coller exactement :
+
+       191B7400:javelin_wooden
+       191B6A00:bolt
+       191B8300:rock
+       191B89E0:stone
+       191B8580:arrow_polybolos
+       191B72C0:rock_large
+       191B75E0:javelin_fire
+
+4. Valider.
+
+5. Maintenant, au lieu de taper une adresse a la main, on peut choisir dans la
+   liste.
+
+6. Si Cheat Engine propose une option du type "Only show the description part",
+   on peut l'activer pour afficher les noms au lieu des nombres.
+
+
+Etape 11 - Sauvegarder la table Cheat Engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Dans Cheat Engine, menu File.
+
+2. Cliquer :
+
+       Save As
+
+3. Donner un nom clair, par exemple :
+
+       Rome2_projectile_test.CT
+
+4. Garder cette table pour la session.
+
+Important :
+
+    apres redemarrage du jeu, les adresses peuvent changer
+    si la ligne affiche ?? ou une valeur incoherente, ne pas reutiliser la table
+    refaire la procedure de recherche
+
+
+Erreurs classiques a eviter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Erreur 1 :
+
+    modifier une ligne de la liste du haut au hasard
+
+Pourquoi c'est mauvais :
+
+    il y a beaucoup de copies et de caches
+    on peut modifier un truc inutile
+
+Bonne methode :
+
+    ajouter 19166448 dans la table du bas
+    modifier la ligne du bas
+
+Erreur 2 :
+
+    croire que ca n'a pas marche parce que les soldats tiennent encore des javelots
+
+Pourquoi c'est faux :
+
+    le modele en main ne change pas
+    la logique projectile peut quand meme etre changee
+
+Bonne verification :
+
+    regarder Missile Damage et Range
+
+Erreur 3 :
+
+    oublier la valeur originale
+
+Valeur originale :
+
+    191B7400
+
+Erreur 4 :
+
+    cocher Freeze sans raison
+
+Bonne methode :
+
+    ne pas freezer au debut
+
+Erreur 5 :
+
+    utiliser les adresses apres redemarrage sans verifier
+
+Bonne methode :
+
+    si le jeu a ete relance, refaire la recherche
+
+
+Procedure pour retrouver l'adresse dans une nouvelle session
+------------------------------------------------------------
+
+Les adresses peuvent changer apres un redemarrage. Voici la methode propre
+pour retrouver le champ sans se tromper.
+
+Partie A - Retrouver la structure projectile javelin_wooden
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Dans Cheat Engine, attacher le processus :
+
+       Rome2.exe
+
+2. Faire un scan de chaine :
+
+       Value Type : String
+       Value      : javelin_wooden
+
+3. Noter l'adresse de la chaine trouvee.
+
+   Dans notre session, c'etait :
+
+       1914DF28
+
+4. Faire un nouveau scan :
+
+       Value Type : 4 Bytes
+       Hex        : oui
+       Value      : adresse de la chaine
+
+   Exemple dans notre session :
+
+       Value = 1914DF28
+
+5. Chercher le resultat qui correspond au champ de nom du projectile.
+
+   Dans notre session :
+
+       191B7410 -> 1914DF28
+
+6. Calculer la base du projectile :
+
+       base projectile = adresse du champ - 0x10
+
+   Exemple :
+
+       191B7410 - 0x10 = 191B7400
+
+7. Verifier la structure avec les offsets connus :
+
+       base + 0x10 = pointeur vers le nom du projectile
+       base + 0x38 = range, int32
+       base + 0x44 = velocity, float
+       base + 0x50 = damage, int32
+       base + 0x54 = AP damage, int32
+
+   Pour javelin_wooden dans notre session :
+
+       base     = 191B7400
+       range    = 80
+       velocity = 35
+       damage   = 20
+       AP       = 9
+
+
+Partie B - Retrouver la structure de l'arme rome_wooden_javelin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Faire un scan de chaine :
+
+       Value Type : String
+       Value      : rome_wooden_javelin
+
+2. Noter l'adresse de la chaine.
+
+   Dans notre session, une adresse canonique etait :
+
+       1916C148
+
+3. Faire un nouveau scan :
+
+       Value Type : 4 Bytes
+       Hex        : oui
+       Value      : adresse de la chaine
+
+   Exemple :
+
+       Value = 1916C148
+
+4. Chercher le champ qui pointe vers cette chaine.
+
+   Dans notre session :
+
+       191B000C -> 1916C148
+
+5. Calculer la base de la structure arme :
+
+       base arme = adresse du champ - 0x0C
+
+   Exemple :
+
+       191B000C - 0x0C = 191B0000
+
+6. Lire le champ :
+
+       base arme + 0x1C
+
+   Exemple :
+
+       191B0000 + 0x1C = 191B001C
+       191B001C -> 19166448
+
+7. Ajouter en table l'adresse pointee :
+
+       19166448
+
+   Type :
+
+       4 Bytes
+
+   Hex :
+
+       oui
+
+8. Verifier que cette adresse contient la base du projectile javelin_wooden.
+
+   Exemple :
+
+       19166448 -> 191B7400
+
+   Si c'est le cas, c'est le champ a modifier.
+
+
+Partie C - Retrouver une autre munition, par exemple bolt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Faire un scan de chaine :
+
+       Value Type : String
+       Value      : bolt
+
+2. Noter l'adresse de la chaine bolt.
+
+   Dans notre session :
+
+       19102690
+
+3. Faire un nouveau scan :
+
+       Value Type : 4 Bytes
+       Hex        : oui
+       Value      : adresse de la chaine bolt
+
+   Exemple :
+
+       Value = 19102690
+
+4. Trouver le champ du nom projectile.
+
+   Dans notre session :
+
+       191B6A10 -> 19102690
+
+5. Calculer la base du projectile :
+
+       191B6A10 - 0x10 = 191B6A00
+
+6. Verifier la structure :
+
+       191B6A00 + 0x10 -> "bolt"
+       range           -> 350
+       velocity        -> 90
+       damage          -> 50
+       AP damage       -> 70
+
+7. Utiliser cette base comme nouvelle valeur du champ projectile :
+
+       champ projectile = 19166448
+       nouvelle valeur  = 191B6A00
+
+
+Verification avec "Find out what accesses"
+------------------------------------------
+
+Cette etape sert a comprendre qui lit le champ.
+
+1. Dans la table Cheat Engine, ajouter :
+
+       19166448
+
+   Type :
+
+       4 Bytes
+
+   Hex :
+
+       oui
+
+2. Clic droit sur la ligne.
+
+3. Cliquer :
+
+       Find out what accesses this address
+
+4. Si Cheat Engine demande d'attacher le debugger, accepter.
+
+5. Laisser la fenetre ouverte.
+
+6. En jeu, faire une action qui force l'utilisation de l'arme :
+
+       ouvrir la carte de l'unite
+       selectionner les Helot Javelinmen
+       lancer une bataille
+       ordonner a l'unite de tirer
+
+7. Si des instructions apparaissent, les noter.
+
+8. Cliquer sur une instruction puis :
+
+       More information
+
+9. Relever :
+
+       instruction
+       registre utilise
+       adresse lue
+       module + offset
+
+Cette verification aide a distinguer :
+
+    - une donnee globale de table
+    - un cache UI
+    - une structure de gameplay active
+
+Note de correction apres test :
+
+    269CBBE8 etait un bon candidat UI/stat-card, mais il n'a pas ete relu
+    pendant les manipulations de selection. Ce n'est donc pas le meilleur champ
+    a modifier pour changer le projectile.
+
+    19166448 est le champ utile pour cette session, car il est rattache a
+    l'arme rome_wooden_javelin et la modification vers bolt a change les stats
+    en bataille.
+
+
+Creation d'une table Cheat Engine propre
+----------------------------------------
+
+Pour eviter les erreurs, creer ces entrees :
+
+1. Entree principale :
+
+       Description : rome_wooden_javelin projectile field
+       Address     : 19166448
+       Type        : 4 Bytes
+       Hex         : oui
+
+2. Noter les valeurs possibles dans la description ou en dropdown :
+
+       191B7400:javelin_wooden
+       191B6A00:bolt
+       191B8300:rock
+       191B89E0:stone
+       191B8580:arrow_polybolos
+       191B72C0:rock_large
+       191B75E0:javelin_fire
+
+3. Dans Cheat Engine, pour faire un dropdown :
+
+       clic droit sur l'entree
+       Set/Change dropdown selection options
+       coller les lignes ci-dessus
+       activer l'affichage sous forme de liste si disponible
+
+4. Ne pas freezer l'adresse au debut.
+
+5. Garder une entree ou une note de rollback :
+
+       rollback normal = 191B7400
+
+
+Risques et limites
+------------------
+
+1. Le champ trouve semble etre global pour l'arme :
+
+       rome_wooden_javelin
+
+   Donc la modification peut affecter toutes les unites qui utilisent cette
+   arme, pas seulement l'unite actuellement selectionnee.
+
+2. Pour cibler une seule unite, il faudra trouver une structure d'instance en
+   bataille, probablement l'objet d'arme ou de tir propre a l'unite.
+
+3. La modification ne change pas forcement le visuel tenu en main.
+
+   Les soldats peuvent continuer a tenir un javelot meme si le projectile
+   logique est devenu bolt. Pour verifier, regarder :
+
+       Missile Damage
+       Range
+       comportement du tir
+
+4. Les adresses sont valables pour la session en cours.
+
+   Apres redemarrage du jeu :
+
+       ne pas reutiliser les adresses sans verification
+       refaire la procedure de recherche
+
+5. La modification ne touche pas les fichiers du jeu.
+
+6. La modification peut etre annulee immediatement avec :
+
+       19166448 = 191B7400
+
+7. Si le jeu crash ou si le comportement est bizarre :
+
+       relancer le jeu
+       ou remettre la valeur originale avant de continuer
+
+
+Resume ultra court
+------------------
+
+Dans cette session :
+
+    arme Helot Javelinmen = rome_wooden_javelin
+    projectile original   = javelin_wooden
+    champ a modifier      = 19166448
+    original              = 191B7400
+    bolt                  = 191B6A00
+
+Modification faite :
+
+    19166448 : 191B7400 -> 191B6A00
+
+Validation observee :
+
+    Missile Damage : 120
+    Range          : 350
+
+Note :
+
+    le visuel du javelot dans la main peut rester identique
+
+Rollback :
+
+    19166448 : 191B6A00 -> 191B7400
